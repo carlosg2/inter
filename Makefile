@@ -310,11 +310,59 @@ static_ttf: $(STATIC_FONTS_TTF)
 static_web: $(STATIC_FONTS_WEB)
 static_web_hinted: $(STATIC_FONTS_WEB_HINTED)
 
+# ---------------------------------------------------------------------------------
+# rounded variant (Inter Rounded / soft corners)
+# Based on the Open Runde approach: https://github.com/lauridskern/open-runde
+
+ROUNDED_UFODIR := build/ufo-rounded
+ROUNDED_FONTDIR := $(FONTDIR)/rounded
+ROUNDED_RADIUS := 30
+
+# Rounded UFO generation from base UFOs
+$(ROUNDED_UFODIR)/%.ufo: $(UFODIR)/%.ufo misc/tools/round-corners.py | $(ROUNDED_UFODIR) venv
+	python misc/tools/round-corners.py $< $@ --radius $(ROUNDED_RADIUS)
+
+$(ROUNDED_UFODIR):
+	mkdir -p $@
+
+# Rounded static fonts (TTF)
+$(ROUNDED_FONTDIR)/static/%.ttf: $(ROUNDED_UFODIR)/%.ufo build/features_data | $(ROUNDED_FONTDIR)/static venv
+	fontmake -u $< -o ttf --output-path $@ $(FM_ARGS_2)
+
+# Rounded static fonts (OTF)
+$(ROUNDED_FONTDIR)/static/%.otf: $(ROUNDED_UFODIR)/%.ufo build/features_data | $(ROUNDED_FONTDIR)/static venv
+	fontmake -u $< -o otf --output-path $@.tmp.otf $(FM_ARGS_2)
+	psautohint -o $@ $@.tmp.otf
+	@rm $@.tmp.otf
+
+$(ROUNDED_FONTDIR)/static:
+	mkdir -p $@
+
+# Define rounded font weights (matching Open Runde: Regular, Medium, SemiBold, Bold)
+ROUNDED_FONTS := \
+	Inter-Regular \
+	Inter-Medium \
+	Inter-SemiBold \
+	Inter-Bold
+
+ROUNDED_FONTS_TTF := $(patsubst %,$(ROUNDED_FONTDIR)/static/%.ttf,$(ROUNDED_FONTS))
+ROUNDED_FONTS_OTF := $(patsubst %,$(ROUNDED_FONTDIR)/static/%.otf,$(ROUNDED_FONTS))
+
+# Rounded variant targets
+rounded: $(ROUNDED_FONTS_TTF)
+rounded_otf: $(ROUNDED_FONTS_OTF)
+rounded_ttf: $(ROUNDED_FONTS_TTF)
+
+# Make sure intermediate rounded UFOs are preserved
+.PRECIOUS: $(ROUNDED_UFODIR)/Inter-Regular.ufo $(ROUNDED_UFODIR)/Inter-Medium.ufo \
+	$(ROUNDED_UFODIR)/Inter-SemiBold.ufo $(ROUNDED_UFODIR)/Inter-Bold.ufo
+
 all: var googlefonts static web static_otf
 
 .PHONY: \
 	all var var_web web \
-	static static_otf static_ttf static_web static_web_hinted
+	static static_otf static_ttf static_web static_web_hinted \
+	rounded rounded_otf rounded_ttf
 
 # ---------------------------------------------------------------------------------
 # testing

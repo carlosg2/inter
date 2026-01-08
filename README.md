@@ -80,6 +80,27 @@ For web pages, there's an official [CDN distribution](https://rsms.me/inter/inte
 > [Please share in Show & Tell! →](https://github.com/rsms/inter/discussions/categories/show-and-tell)
 
 
+### Inter Rounded
+
+Inter Rounded is a "soft" variant of Inter with rounded corners, inspired by [Open Runde](https://github.com/lauridskern/open-runde).
+The rounded corners are automatically generated using a corner rounding algorithm.
+
+Inter Rounded is currently available in 4 weights:
+
+| Roman (upright) name | Weight
+| -------------------- | ------------
+| Regular              | 400
+| Medium               | 500
+| Semi Bold            | 600
+| Bold                 | 700
+
+To build Inter Rounded, run:
+```sh
+make rounded      # Build TTF files
+make rounded_otf  # Build OTF files
+```
+
+
 ### Notable forks
 
 - [Open Runde](https://github.com/lauridskern/open-runde) is a rounded variant of Inter
