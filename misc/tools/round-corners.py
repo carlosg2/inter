@@ -15,10 +15,8 @@ Based on the approach used by Open Runde (https://github.com/lauridskern/open-ru
 """
 
 import argparse
-import copy
 import math
 import os
-import shutil
 import sys
 from typing import List, Tuple, Optional
 
@@ -48,11 +46,6 @@ def distance(p1: Tuple[float, float], p2: Tuple[float, float]) -> float:
     return math.sqrt(dx * dx + dy * dy)
 
 
-def lerp(p1: Tuple[float, float], p2: Tuple[float, float], t: float) -> Tuple[float, float]:
-    """Linear interpolation between two points."""
-    return (p1[0] + (p2[0] - p1[0]) * t, p1[1] + (p2[1] - p1[1]) * t)
-
-
 def angle_between_vectors(v1: Tuple[float, float], v2: Tuple[float, float]) -> float:
     """Calculate angle between two vectors in radians."""
     n1 = normalize(v1)
@@ -70,11 +63,6 @@ def is_corner_point(point: Point) -> bool:
     if point.segmentType is None:  # off-curve point
         return False
     return not getattr(point, 'smooth', False)
-
-
-def get_on_curve_points(contour: Contour) -> List[Tuple[int, Point]]:
-    """Get all on-curve points with their indices."""
-    return [(i, p) for i, p in enumerate(contour) if p.segmentType is not None]
 
 
 def get_incoming_direction(contour: Contour, point_index: int) -> Optional[Tuple[float, float]]:
@@ -180,12 +168,6 @@ def round_corner(
     half_angle = angle / 2.0
 
     # Calculate tangent length based on radius and angle
-    # Using the formula: tan_length = radius * tan(half_angle)
-    # But we need to adjust based on the bezier approximation of arcs
-    # Kappa constant for quarter circle arc approximation
-    kappa = 0.5522847498
-
-    # Adjust radius based on angle (smaller angles need proportionally smaller arcs)
     # The distance to move back from corner along each edge
     tan_length = radius / math.tan(half_angle) if half_angle > 0.01 else radius * 10
 
