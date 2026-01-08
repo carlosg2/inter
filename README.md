@@ -80,6 +80,49 @@ For web pages, there's an official [CDN distribution](https://rsms.me/inter/inte
 > [Please share in Show & Tell! →](https://github.com/rsms/inter/discussions/categories/show-and-tell)
 
 
+### Inter Rounded
+
+Inter Rounded is a "soft" variant of Inter with rounded corners, inspired by [Open Runde](https://github.com/lauridskern/open-runde).
+The rounded corners are automatically generated using a corner rounding algorithm.
+
+#### Variable Font
+
+Inter Rounded is available as a [variable font](https://rsms.me/inter/#variable) with two axes:
+
+| Axis     | Tag    | Range     | Default | Description
+| -------- | ------ | --------- | ------- | -----------
+| Weight   | wght   | 400–700   | 400     | Controls font weight from Regular to Bold
+| Rounding | ROND   | 0–100     | 100     | Controls corner rounding (0=sharp, 100=fully rounded)
+
+The Rounding axis allows continuous adjustment of corner roundness, enabling smooth transitions between sharp and rounded styles.
+
+#### Static Fonts
+
+Inter Rounded is also available as static fonts in 4 weights:
+
+| Roman (upright) name | Weight
+| -------------------- | ------------
+| Regular              | 400
+| Medium               | 500
+| Semi Bold            | 600
+| Bold                 | 700
+
+#### Building Inter Rounded
+
+```sh
+# Static fonts
+make rounded          # Build static TTF files
+make rounded_otf      # Build static OTF files
+
+# Variable font
+make rounded_var      # Build variable TTF
+make rounded_var_web  # Build variable WOFF2
+
+# Build everything
+make rounded_all      # Build all rounded variants
+```
+
+
 ### Notable forks
 
 - [Open Runde](https://github.com/lauridskern/open-runde) is a rounded variant of Inter

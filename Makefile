@@ -310,11 +310,85 @@ static_ttf: $(STATIC_FONTS_TTF)
 static_web: $(STATIC_FONTS_WEB)
 static_web_hinted: $(STATIC_FONTS_WEB_HINTED)
 
+# ---------------------------------------------------------------------------------
+# rounded variant (Inter Rounded / soft corners)
+# Based on the Open Runde approach: https://github.com/lauridskern/open-runde
+# Supports both static fonts and variable font with Weight and Rounding axes
+
+ROUNDED_UFODIR := build/ufo-rounded
+ROUNDED_FONTDIR := $(FONTDIR)/rounded
+ROUNDED_RADIUS := 50
+
+# Rounded UFO generation from base UFOs
+$(ROUNDED_UFODIR)/%.ufo: $(UFODIR)/%.ufo misc/tools/round-corners.py | $(ROUNDED_UFODIR) venv
+	python misc/tools/round-corners.py $< $@ --radius $(ROUNDED_RADIUS)
+
+$(ROUNDED_UFODIR):
+	mkdir -p $@
+
+# Rounded static fonts (TTF)
+$(ROUNDED_FONTDIR)/static/%.ttf: $(ROUNDED_UFODIR)/%.ufo build/features_data | $(ROUNDED_FONTDIR)/static venv
+	fontmake -u $< -o ttf --output-path $@ $(FM_ARGS_2)
+
+# Rounded static fonts (OTF)
+$(ROUNDED_FONTDIR)/static/%.otf: $(ROUNDED_UFODIR)/%.ufo build/features_data | $(ROUNDED_FONTDIR)/static venv
+	fontmake -u $< -o otf --output-path $@.tmp.otf $(FM_ARGS_2)
+	psautohint -o $@ $@.tmp.otf
+	@rm $@.tmp.otf
+
+$(ROUNDED_FONTDIR)/static:
+	mkdir -p $@
+
+$(ROUNDED_FONTDIR)/var:
+	mkdir -p $@
+
+# Define rounded font weights (matching Open Runde: Regular, Medium, SemiBold, Bold)
+ROUNDED_FONTS := \
+	Inter-Regular \
+	Inter-Medium \
+	Inter-SemiBold \
+	Inter-Bold
+
+ROUNDED_FONTS_TTF := $(patsubst %,$(ROUNDED_FONTDIR)/static/%.ttf,$(ROUNDED_FONTS))
+ROUNDED_FONTS_OTF := $(patsubst %,$(ROUNDED_FONTDIR)/static/%.otf,$(ROUNDED_FONTS))
+
+ROUNDED_UFOS := $(patsubst %,$(ROUNDED_UFODIR)/%.ufo,$(ROUNDED_FONTS))
+
+# Rounded designspace generation
+$(ROUNDED_UFODIR)/InterRounded.designspace: $(UFODIR)/Inter-Roman.designspace $(ROUNDED_UFOS) misc/tools/gen-rounded-designspace.py | venv
+	python misc/tools/gen-rounded-designspace.py $< $@ --rounded-ufo-dir $(ROUNDED_UFODIR) --radius-max $(ROUNDED_RADIUS) -v
+
+# Rounded variable font (raw)
+$(ROUNDED_FONTDIR)/var/.InterRounded.var.ttf: $(ROUNDED_UFODIR)/InterRounded.designspace build/features_data | $(ROUNDED_FONTDIR)/var venv
+	fontmake -o variable -m $< --output-path $@ $(FM_ARGS_2)
+
+# Rounded variable font (baked/final)
+$(ROUNDED_FONTDIR)/var/InterRoundedVariable.ttf: $(ROUNDED_FONTDIR)/var/.InterRounded.var.ttf misc/tools/bake-rounded-vf.py | venv
+	python misc/tools/bake-rounded-vf.py $< -o $@ -v
+
+# Rounded variable font web format
+$(ROUNDED_FONTDIR)/var/InterRoundedVariable.woff2: $(ROUNDED_FONTDIR)/var/InterRoundedVariable.ttf | venv
+	misc/tools/woff2 compress -o "$@" "$<"
+
+# Rounded variant targets
+rounded: $(ROUNDED_FONTS_TTF)
+rounded_otf: $(ROUNDED_FONTS_OTF)
+rounded_ttf: $(ROUNDED_FONTS_TTF)
+rounded_var: $(ROUNDED_FONTDIR)/var/InterRoundedVariable.ttf
+rounded_var_web: $(ROUNDED_FONTDIR)/var/InterRoundedVariable.woff2
+rounded_all: rounded rounded_var
+
+# Make sure intermediate rounded UFOs are preserved
+.PRECIOUS: $(ROUNDED_UFODIR)/Inter-Regular.ufo $(ROUNDED_UFODIR)/Inter-Medium.ufo \
+	$(ROUNDED_UFODIR)/Inter-SemiBold.ufo $(ROUNDED_UFODIR)/Inter-Bold.ufo \
+	$(ROUNDED_UFODIR)/InterRounded.designspace $(ROUNDED_FONTDIR)/var/.InterRounded.var.ttf
+
 all: var googlefonts static web static_otf
 
 .PHONY: \
 	all var var_web web \
-	static static_otf static_ttf static_web static_web_hinted
+	static static_otf static_ttf static_web static_web_hinted \
+	rounded rounded_otf rounded_ttf rounded_var rounded_var_web rounded_all
 
 # ---------------------------------------------------------------------------------
 # testing
