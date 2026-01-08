@@ -175,6 +175,9 @@ def round_corner(
     # For a bezier curve approximating an arc of angle θ:
     # handle_length = (4/3) * tan(θ/4) * radius
     arc_angle = math.pi - angle  # The arc spans this angle
+    # Protect against very small arc angles that could cause numerical instability
+    if arc_angle < 0.01:
+        return None  # Skip rounding for nearly straight angles
     handle_length = (4.0 / 3.0) * math.tan(arc_angle / 4.0) * radius
 
     # Find the previous and next on-curve points for distance checking
